@@ -75,6 +75,9 @@ extern "C" {
 
 #define LED_WAIT_TIME_MS 300
 
+#define CLOCKWISE 			0
+#define COUNTERCLOCKWISE 	1
+
 #define FALSE 0
 #define false 0
 #define TRUE 1

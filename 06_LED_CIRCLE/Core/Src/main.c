@@ -65,6 +65,12 @@ uint16_t TestTimer;
 // sec Timing
 uint16_t SecsCounter;
 
+// LED Direction
+uint8_t LedDirection = CLOCKWISE;
+uint8_t LedStates[] = { LED_RED, LED_BLU, LED_GRN, LED_ORN };
+uint8_t LedCount = 4;
+uint8_t LedStatesIndex = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -408,44 +414,61 @@ void UpdateLEDState(void)
 			LED_Timer = LED_WAIT_TIME_MS;
 		}
 	}
-	else if ( LED_State == LED_RED )
+	if (LedDirection == CLOCKWISE)
 	{
-		if (!LED_Timer)
+		LedStatesIndex++;
+
+		// IF it's at the end of the array, start over
+		if (LedStatesIndex >= LedCount)
 		{
-			RED_LED_OFF();
-			BLU_LED_ON();
-			LED_State = LED_BLU;
-			LED_Timer = LED_WAIT_TIME_MS;
+			LedStatesIndex = 0;
 		}
 	}
-	else if (LED_State == LED_BLU)
+	// ELSE LedDirection == COUNTERCLOCKWISE
+	else
 	{
-		if(!LED_Timer)
+		LedStatesIndex--;
+		if (LedStatesIndex < 0)
 		{
-			BLU_LED_OFF();
-			GRN_LED_ON();
-			LED_State = LED_GRN;
-			LED_Timer = LED_WAIT_TIME_MS;
+			LedStatesIndex = LedCount - 1;
+
 		}
 	}
-	else if (LED_State == LED_GRN)
-	{
-		if (!LED_Timer)
-		{
-			GRN_LED_OFF();
-			ORN_LED_ON();
-			LED_State = LED_ORN;
-			LED_Timer = LED_WAIT_TIME_MS;
-		}
+	SwitchLED(LED_State, LedStates[LedStatesIndex]);
+}
+
+void SwitchLED(uint8_t oldState, uint8_t newState)
+{
+	switch (oldState) {
+	case LED_RED:
+		RED_LED_OFF();
+		break;
+	case LED_BLU:
+		BLU_LED_OFF();
+		break;
+	case LED_GRN:
+		GRN_LED_OFF();
+		break;
+	case LED_ORN:
+		ORN_LED_OFF();
+		break;
 	}
-	else if (LED_State == LED_ORN)
-	{
-		if (!LED_Timer)
-		{
-			ORN_LED_OFF();
-			LED_State = LED_IDLE;
-		}
+
+	switch (newState) {
+	case LED_RED:
+		RED_LED_ON();
+		break;
+	case LED_BLU:
+		BLU_LED_ON();
+		break;
+	case LED_GRN:
+		GRN_LED_ON();
+		break;
+	case LED_ORN:
+		ORN_LED_ON();
+		break;
 	}
+	LED_State = newState;
 }
 
 
