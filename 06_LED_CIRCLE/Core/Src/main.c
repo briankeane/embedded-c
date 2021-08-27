@@ -385,14 +385,34 @@ void CheckSWs(void)
 
 void handleBtnRedPressed(void)
 {
-	LED_Start = TRUE;
-	LED_Timer = LED_WAIT_TIME_MS;
+	if (LedDirection == CLOCKWISE)
+	{
+		LedDirection = COUNTERCLOCKWISE;
+	}
+	else
+	{
+		LedDirection = CLOCKWISE;
+	}
 }
 
 void handleBtnGrnPressed(void)
 {
-	LED_Start = TRUE;
-	LED_Timer = LED_WAIT_TIME_MS;
+	if (LED_State == LED_IDLE)
+	{
+		LED_Start = TRUE;
+		LED_Timer = LED_WAIT_TIME_MS;
+	}
+	else
+	{
+		GRN_LED_OFF();
+		ORN_LED_OFF();
+		RED_LED_OFF();
+		BLU_LED_OFF();
+
+		LED_Start = FALSE;
+		LED_State = LED_IDLE;
+	}
+
 }
 
 void handleBtn1Pressed(void)
@@ -414,27 +434,34 @@ void UpdateLEDState(void)
 			LED_Timer = LED_WAIT_TIME_MS;
 		}
 	}
-	if (LedDirection == CLOCKWISE)
+	else if (!LED_Timer)
 	{
-		LedStatesIndex++;
-
-		// IF it's at the end of the array, start over
-		if (LedStatesIndex >= LedCount)
+		if (LedDirection == CLOCKWISE)
 		{
-			LedStatesIndex = 0;
-		}
-	}
-	// ELSE LedDirection == COUNTERCLOCKWISE
-	else
-	{
-		LedStatesIndex--;
-		if (LedStatesIndex < 0)
-		{
-			LedStatesIndex = LedCount - 1;
+			LedStatesIndex++;
 
+			// IF it's at the end of the array, start over
+			if (LedStatesIndex >= LedCount)
+			{
+				LedStatesIndex = 0;
+			}
 		}
+		// ELSE LedDirection == COUNTERCLOCKWISE
+		else
+		{
+			if (LedStatesIndex == 0)
+			{
+				LedStatesIndex = LedCount - 1;
+			}
+			else
+			{
+				LedStatesIndex--;
+			}
+		}
+		SwitchLED(LED_State, LedStates[LedStatesIndex]);
+		LED_Timer = LED_WAIT_TIME_MS;
 	}
-	SwitchLED(LED_State, LedStates[LedStatesIndex]);
+
 }
 
 void SwitchLED(uint8_t oldState, uint8_t newState)

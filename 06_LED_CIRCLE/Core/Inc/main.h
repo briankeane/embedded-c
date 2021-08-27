@@ -73,7 +73,7 @@ extern "C" {
 #define B_RED HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_0)
 #define B_RED_PRESSED 0
 
-#define LED_WAIT_TIME_MS 300
+#define LED_WAIT_TIME_MS 70
 
 #define CLOCKWISE 			0
 #define COUNTERCLOCKWISE 	1
