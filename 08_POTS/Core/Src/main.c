@@ -49,7 +49,13 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
+//------------------------------------------------------------------------------------- UART variables
 uint8_t U1_RxChar;
+
+//------------------------------------------------------------------------------------- ADC variables
+uint32_t ADC1_Values[2];							// DMA puts integer conversions here
+float ADC1_4V;                        // We convert to volts and save it in these variables
+float ADC1_8V;
 
 // ------------ Utility Timer Variables
 uint16_t B1dbTimer;
@@ -108,6 +114,7 @@ void handleBtnRedPressed(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  char WorkStr[32];
 
   /* USER CODE END 1 */
 
@@ -136,6 +143,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
   USART1->CR1 |= 1<<5;  //USART1_CR1_RE;  // Enable RXNE interrupt (receiver not empty)
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t *) ADC1_Values, 2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -146,16 +154,14 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	if (!TestTimer) {
+	if (!TestTimer)
+	{
 		TestTimer = 500;
-
-	if (U1_RxChar == 'A')
-		HAL_UART_Transmit(&huart1, (uint8_t*) "A-Test\r\n", 8, 100);  // Send msg
-	else if (U1_RxChar == 'B')
-		HAL_UART_Transmit(&huart1, (uint8_t*) "B-Test\r\n", 8, 100);  // Send msg
-	else
-		HAL_UART_Transmit(&huart1, (uint8_t*) "Enter A or B\r\n", 14, 100);  // Send msg
+		sprintf(WorkStr, "Red input: %3.2f   Green Input: %3.2f\r\n", ADC1_4V, ADC1_8V);
+		HAL_UART_Transmit(&huart1, (uint8_t*) WorkStr, strlen(WorkStr), 100);
 	}
+
+
 
 	CheckSWs();
 	UpdateLEDState();

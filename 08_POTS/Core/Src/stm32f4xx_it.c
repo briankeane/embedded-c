@@ -60,7 +60,13 @@ extern DMA_HandleTypeDef hdma_adc1;
 extern TIM_HandleTypeDef htim2;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
+//------------------------------------------------------------------------------------- UART variables
+
 extern uint8_t U1_RxChar;
+//------------------------------------------------------------------------------------- ADC variables
+extern uint32_t ADC1_Values[2];
+extern float ADC1_4V;
+extern float ADC1_8V;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -237,7 +243,8 @@ void USART1_IRQHandler(void)
 void DMA2_Stream0_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
-
+  ADC1_4V = (float) ADC1_Values[0]/0xFFF*3.3;  // Convert to 0-3.3v  12 bits so 0xFFF is 3.3 volts
+  ADC1_8V = (float) ADC1_Values[1]/0xFFF*3.3;
   /* USER CODE END DMA2_Stream0_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_adc1);
   /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
