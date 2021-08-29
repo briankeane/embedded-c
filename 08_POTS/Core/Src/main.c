@@ -84,6 +84,7 @@ uint8_t LedDirection = CLOCKWISE;
 uint8_t LedStates[] = { LED_RED, LED_BLU, LED_GRN, LED_ORN };
 uint8_t LedCount = 4;
 uint8_t LedStatesIndex = 0;
+uint16_t LEDWaitTimeMs = 1000;
 
 /* USER CODE END PV */
 
@@ -96,6 +97,7 @@ static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void CheckSWs(void);
+void CheckPots(void);
 void UpdateLEDState(void);
 void handleBtn1Pressed(void);
 void handleBtnGrnPressed(void);
@@ -162,7 +164,7 @@ int main(void)
 	}
 
 
-
+	CheckPots();
 	CheckSWs();
 	UpdateLEDState();
 
@@ -476,11 +478,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			BRedPressed_F = TRUE;
 	}
 
-
-	if (LED_Timer)
-	{
-		LED_Timer--;
-	}
+	LED_Timer++;
 }
 
 void CheckSWs(void)
@@ -517,6 +515,11 @@ void CheckSWs(void)
 	}
 }
 
+void CheckPots(void)
+{
+  LEDWaitTimeMs = abs((uint16_t) (1000.0 - (ADC1_4V / 3.3) * 1000.0));
+}
+
 void handleBtnRedPressed(void)
 {
 	if (LedDirection == CLOCKWISE)
@@ -534,7 +537,7 @@ void handleBtnGrnPressed(void)
 	if (LED_State == LED_IDLE)
 	{
 		LED_Start = TRUE;
-		LED_Timer = LED_WAIT_TIME_MS;
+		LED_Timer = 0;
 	}
 	else
 	{
@@ -552,7 +555,7 @@ void handleBtnGrnPressed(void)
 void handleBtn1Pressed(void)
 {
 	LED_Start = TRUE;
-	LED_Timer = LED_WAIT_TIME_MS;
+	LED_Timer = 0;
 }
 
 void UpdateLEDState(void)
@@ -565,10 +568,10 @@ void UpdateLEDState(void)
 			LED_Start = FALSE;
 			RED_LED_ON();
 			LED_State = LED_RED;
-			LED_Timer = LED_WAIT_TIME_MS;
+			LED_Timer = 0;
 		}
 	}
-	else if (!LED_Timer)
+	else if (LED_Timer > LEDWaitTimeMs)
 	{
 		if (LedDirection == CLOCKWISE)
 		{
@@ -593,7 +596,7 @@ void UpdateLEDState(void)
 			}
 		}
 		SwitchLED(LED_State, LedStates[LedStatesIndex]);
-		LED_Timer = LED_WAIT_TIME_MS;
+		LED_Timer = 0;
 	}
 
 }
