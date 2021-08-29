@@ -156,7 +156,7 @@ int main(void)
 
 	if (!TestTimer)
 	{
-		TestTimer = 500;
+		TestTimer = 100;
 		sprintf(WorkStr, "Red input: %3.2f   Green Input: %3.2f\r\n", ADC1_4V, ADC1_8V);
 		HAL_UART_Transmit(&huart1, (uint8_t*) WorkStr, strlen(WorkStr), 100);
 	}
