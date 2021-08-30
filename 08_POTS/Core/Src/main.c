@@ -80,10 +80,10 @@ uint16_t TestTimer;
 uint16_t SecsCounter;
 
 // LED Direction
-uint8_t LedDirection = CLOCKWISE;
-uint8_t LedStates[] = { LED_RED, LED_BLU, LED_GRN, LED_ORN };
-uint8_t LedCount = 4;
-uint8_t LedStatesIndex = 0;
+uint8_t LEDDirection = CLOCKWISE;
+uint8_t LEDStates[] = { LED_RED, LED_BLU, LED_GRN, LED_ORN };
+uint8_t LEDCount = 4;
+uint8_t LEDStatesIndex = 0;
 uint16_t LEDWaitTimeMs = 1000;
 
 /* USER CODE END PV */
@@ -98,6 +98,7 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void CheckSWs(void);
 void CheckPots(void);
+void SwitchLED(uint8_t oldState, uint8_t newState);
 void UpdateLEDState(void);
 void handleBtn1Pressed(void);
 void handleBtnGrnPressed(void);
@@ -435,7 +436,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		SecsCounter = 0;
 
 		// Handle any 1 sec events or counters...
-//		BLU_LED_TOGGLE();
 	}
 
 	if ( B1 != BUTTON_PRESSED)
@@ -522,13 +522,13 @@ void CheckPots(void)
 
 void handleBtnRedPressed(void)
 {
-	if (LedDirection == CLOCKWISE)
+	if (LEDDirection == CLOCKWISE)
 	{
-		LedDirection = COUNTERCLOCKWISE;
+		LEDDirection = COUNTERCLOCKWISE;
 	}
 	else
 	{
-		LedDirection = CLOCKWISE;
+		LEDDirection = CLOCKWISE;
 	}
 }
 
@@ -573,32 +573,31 @@ void UpdateLEDState(void)
 	}
 	else if (LED_Timer > LEDWaitTimeMs)
 	{
-		if (LedDirection == CLOCKWISE)
+		if (LEDDirection == CLOCKWISE)
 		{
-			LedStatesIndex++;
+			LEDStatesIndex++;
 
 			// IF it's at the end of the array, start over
-			if (LedStatesIndex >= LedCount)
+			if (LEDStatesIndex >= LEDCount)
 			{
-				LedStatesIndex = 0;
+				LEDStatesIndex = 0;
 			}
 		}
-		// ELSE LedDirection == COUNTERCLOCKWISE
+		// ELSE LEDDirection == COUNTERCLOCKWISE
 		else
 		{
-			if (LedStatesIndex == 0)
+			if (LEDStatesIndex == 0)
 			{
-				LedStatesIndex = LedCount - 1;
+				LEDStatesIndex = LEDCount - 1;
 			}
 			else
 			{
-				LedStatesIndex--;
+				LEDStatesIndex--;
 			}
 		}
-		SwitchLED(LED_State, LedStates[LedStatesIndex]);
+		SwitchLED(LED_State, LEDStates[LEDStatesIndex]);
 		LED_Timer = 0;
 	}
-
 }
 
 void SwitchLED(uint8_t oldState, uint8_t newState)
