@@ -22,7 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include "MY_LIS3DSH.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -110,7 +111,7 @@ void handleBtnRedPressed(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+LIS3DSH_DataScaled myData;  // for accelerometer
 /* USER CODE END 0 */
 
 /**
@@ -121,6 +122,8 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
   char WorkStr[32];
+
+  LIS3DSH_InitTypeDef myAccConfigDef;
 
   /* USER CODE END 1 */
 
@@ -151,6 +154,18 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
   USART1->CR1 |= 1<<5;  //USART1_CR1_RE;  // Enable RXNE interrupt (receiver not empty)
   HAL_ADC_Start_DMA(&hadc1, (uint32_t *) ADC1_Values, 2);
+
+  // Accelerometer...
+  myAccConfigDef.dataRate = LIS3DSH_DATARATE_25;
+  myAccConfigDef.fullScale = LIS3DSH_FULLSCALE_4;
+  myAccConfigDef.antiAliasingBW = LIS3DSH_FILTER_BW_50;
+  myAccConfigDef.enableAxes = LIS3DSH_XYZ_ENABLE;
+  myAccConfigDef.interruptEnable = true;
+  LIS3DSH_Init(&hspi1, &myAccConfigDef);
+
+  LIS3DSH_X_calibrate(-1000.0, 980.0);
+  LIS3DSH_Y_calibrate(-1020.0, 1040.0);
+  LIS3DSH_Z_calibrate(-920.0, 1040.0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -161,17 +176,23 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	if (!TestTimer)
-	{
-		TestTimer = 100;
-		sprintf(WorkStr, "Red input: %3.2f   Green Input: %3.2f\r\n", ADC1_4V, ADC1_8V);
-		HAL_UART_Transmit(&huart1, (uint8_t*) WorkStr, strlen(WorkStr), 100);
-	}
 
+    if(LIS3DSH_PollDRDY(1000) == true)
+    {
+      myData = LIS3DSH_GetDataScaled();
+      HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+    }
 
-	CheckPots();
-	CheckSWs();
-	UpdateLEDState();
+    if (!TestTimer)
+    {
+      TestTimer = 100;
+      sprintf(WorkStr, "Red input: %3.2f   Green Input: %3.2f\r\n", ADC1_4V, ADC1_8V);
+      HAL_UART_Transmit(&huart1, (uint8_t*) WorkStr, strlen(WorkStr), 100);
+    }
+
+    CheckPots();
+    CheckSWs();
+    UpdateLEDState();
 
   }
   /* USER CODE END 3 */
