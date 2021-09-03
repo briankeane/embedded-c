@@ -47,6 +47,7 @@ DMA_HandleTypeDef hdma_adc1;
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim4;
 
 UART_HandleTypeDef huart1;
 
@@ -99,6 +100,7 @@ static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 void CheckSWs(void);
 void CheckPots(void);
@@ -153,6 +155,7 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   MX_SPI1_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
   USART1->CR1 |= 1<<5;  //USART1_CR1_RE;  // Enable RXNE interrupt (receiver not empty)
@@ -169,6 +172,15 @@ int main(void)
   LIS3DSH_X_calibrate(-1000.0, 980.0);
   LIS3DSH_Y_calibrate(-1020.0, 1040.0);
   LIS3DSH_Z_calibrate(-920.0, 1040.0);
+
+  // TestTimer for Pulse Width Modulation
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+
+  TestTimer = 1000;
+  TIM4-> CCR1 = 100;
+  TIM4-> CCR3 = 0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -188,15 +200,23 @@ int main(void)
 
     if (!TestTimer)
     {
-      TestTimer = 100;
-      sprintf(WorkStr, "x: %3.2f   y: %3.2f    z: %3.2f\r\n", myData.x, myData.y, myData.z);
-      HAL_UART_Transmit(&huart1, (uint8_t*) WorkStr, strlen(WorkStr), 100);
+      TestTimer = 1000;
+      if ( TIM4->CCR1 <= 90 )
+        TIM4->CCR1 += 10;
+      else
+        TIM4->CCR1 = 0;
+
+
+      if ( TIM4->CCR3 >= 10 )
+        TIM4->CCR3 -= 10;
+      else
+        TIM4->CCR3 = 100;
     }
 
-    CheckPots();
-    CheckSWs();
-    UpdateAccelerometerLEDState();
-    UpdateLEDState();
+//    CheckPots();
+//    CheckSWs();
+//    UpdateAccelerometerLEDState();
+//    UpdateLEDState();
 
   }
   /* USER CODE END 3 */
@@ -387,6 +407,69 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 840;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 100;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 100;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+  HAL_TIM_MspPostInit(&htim4);
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -459,7 +542,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GRN_LED_Pin|ORN_LED_Pin|RED_LED_Pin|BLU_LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, ORN_LED_Pin|BLU_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : MEMS_CS_Pin */
   GPIO_InitStruct.Pin = MEMS_CS_Pin;
@@ -481,8 +564,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : GRN_LED_Pin ORN_LED_Pin RED_LED_Pin BLU_LED_Pin */
-  GPIO_InitStruct.Pin = GRN_LED_Pin|ORN_LED_Pin|RED_LED_Pin|BLU_LED_Pin;
+  /*Configure GPIO pins : ORN_LED_Pin BLU_LED_Pin */
+  GPIO_InitStruct.Pin = ORN_LED_Pin|BLU_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
