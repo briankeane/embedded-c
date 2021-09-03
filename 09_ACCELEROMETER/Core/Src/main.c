@@ -107,11 +107,14 @@ void UpdateLEDState(void);
 void handleBtn1Pressed(void);
 void handleBtnGrnPressed(void);
 void handleBtnRedPressed(void);
+void UpdateAccelerometerLEDState(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 LIS3DSH_DataScaled myData;  // for accelerometer
+
 /* USER CODE END 0 */
 
 /**
@@ -180,18 +183,19 @@ int main(void)
     if(LIS3DSH_PollDRDY(1000) == true)
     {
       myData = LIS3DSH_GetDataScaled();
-      HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+//      HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
     }
 
     if (!TestTimer)
     {
       TestTimer = 100;
-      sprintf(WorkStr, "Red input: %3.2f   Green Input: %3.2f\r\n", ADC1_4V, ADC1_8V);
+      sprintf(WorkStr, "x: %3.2f   y: %3.2f    z: %3.2f\r\n", myData.x, myData.y, myData.z);
       HAL_UART_Transmit(&huart1, (uint8_t*) WorkStr, strlen(WorkStr), 100);
     }
 
     CheckPots();
     CheckSWs();
+    UpdateAccelerometerLEDState();
     UpdateLEDState();
 
   }
@@ -623,7 +627,6 @@ void handleBtnGrnPressed(void)
 		LED_Start = FALSE;
 		LED_State = LED_IDLE;
 	}
-
 }
 
 void handleBtn1Pressed(void)
@@ -706,6 +709,45 @@ void SwitchLED(uint8_t oldState, uint8_t newState)
 		break;
 	}
 	LED_State = newState;
+}
+
+void UpdateAccelerometerLEDState(void)
+{
+  if (myData.x < -100)
+  {
+    GRN_LED_ON();
+  }
+  else
+  {
+    GRN_LED_OFF();
+  }
+
+  if (myData.x > 100)
+  {
+    RED_LED_ON();
+  }
+  else
+  {
+    RED_LED_OFF();
+  }
+
+  if (myData.y < -100)
+  {
+    BLU_LED_ON();
+  }
+  else
+  {
+    BLU_LED_OFF();
+  }
+
+  if (myData.y > 100)
+  {
+    ORN_LED_ON();
+  }
+  else
+  {
+    ORN_LED_OFF();
+  }
 }
 
 
